@@ -1,25 +1,14 @@
 "use client";
 
-import { hasFlag, UserFlags } from "@/lib/api";
-import { useAuthStore } from "@/stores/auth";
 import Image from "next/image";
-import Link from "next/link";
-import { useEffect, useState } from "react";
 import { FaInstagram, FaLinkedin, FaTiktok } from "react-icons/fa";
 
 const Landing = () => {
-  const { isAuthenticated, logout, user } = useAuthStore();
-  const [mounted, setMounted] = useState(false);
-
   const socialLinks = [
     { icon: FaInstagram, href: "https://instagram.com/qhacksx", label: "Instagram" },
     { icon: FaLinkedin, href: "https://linkedin.com/company/qhacks", label: "LinkedIn" },
     { icon: FaTiktok, href: "https://tiktok.com/@qhacksx", label: "TikTok" },
   ];
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   return (
     <main id="home" className="relative z-10 h-screen w-full bg-black select-none">
@@ -76,43 +65,6 @@ const Landing = () => {
             </p>
           </div>
 
-          <div className="pointer-events-auto flex flex-col items-center gap-3">
-            <Link
-              href={
-                mounted && isAuthenticated
-                  ? hasFlag(user, UserFlags.Admin) || hasFlag(user, UserFlags.Staff) || hasFlag(user, UserFlags.Sponsor)
-                    ? "/sso/handoff?target=dashboard"
-                    : "/application"
-                  : "/register"
-              }
-              className="rounded-full border border-[#F4D389] bg-transparent px-9 py-2.5 text-base font-semibold tracking-wide text-[#f4d389] shadow-[0_10px_40px_rgba(244,211,137,0.2)] transition hover:bg-[rgba(244,211,137,0.08)] hover:text-[#f9e7b6]"
-            >
-              {mounted && isAuthenticated
-                ? hasFlag(user, UserFlags.Admin) || hasFlag(user, UserFlags.Staff) || hasFlag(user, UserFlags.Sponsor)
-                  ? "Enter Dashboard"
-                  : hasFlag(user, UserFlags.Applied)
-                    ? "View Application"
-                    : "Apply Now"
-                : "Register Here"}
-            </Link>
-            {mounted && isAuthenticated ? (
-              <div className="space-y-2 text-center">
-                <button
-                  onClick={() => logout()}
-                  className="text-lg font-semibold text-[#F4D389] hover:cursor-pointer hover:underline"
-                >
-                  Logout
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-1 text-center">
-                <p className="text-sm font-medium text-white sm:text-base">Already have an account?</p>
-                <Link href="/login" className="text-lg font-semibold text-[#c3a046] hover:underline">
-                  Login
-                </Link>
-              </div>
-            )}
-          </div>
           <div className="pointer-events-auto flex items-center gap-3 sm:gap-4 lg:gap-5">
             {socialLinks.map((social) => {
               const Icon = social.icon;
