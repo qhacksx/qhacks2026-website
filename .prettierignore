@@ -1,2 +1,6 @@
 **/*.yml
 **/*.yaml
+**/node_modules/**
+**/.next/**
+**/.vercel/**
+**/out/**

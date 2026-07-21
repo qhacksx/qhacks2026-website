@@ -1,0 +1,223 @@
+"use client";
+
+import { AnimatePresence, motion } from "framer-motion";
+import { Menu, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+
+const NavbarMenu = () => {
+  const [isVisible, setIsVisible] = useState(true);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [hasRevealed, setHasRevealed] = useState(false);
+  const [hasPlayedIntro, setHasPlayedIntro] = useState(false);
+  const lastScrollYRef = useRef(0);
+  const tickingRef = useRef(false);
+
+  const navLinks = [
+    { name: "Join Us", href: "#joinus" },
+    { name: "About", href: "#about" },
+    { name: "Sponsors", href: "#sponsors" },
+    { name: "FAQ", href: "#faq" },
+    { name: "Meet the Team", href: "#team" },
+  ];
+
+  useEffect(() => {
+    lastScrollYRef.current = window.scrollY;
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
+
+      if (!isDesktop) {
+        setIsVisible(true);
+        lastScrollYRef.current = currentScrollY;
+        return;
+      }
+
+      if (!tickingRef.current) {
+        window.requestAnimationFrame(() => {
+          const last = lastScrollYRef.current;
+          const delta = currentScrollY - last;
+          const scrolledPastHero = currentScrollY > 80;
+
+          if (currentScrollY < 12) {
+            setIsVisible(true);
+          } else if (delta > 6 && scrolledPastHero) {
+            setIsVisible(false);
+          } else if (delta < -6) {
+            setIsVisible(true);
+          }
+
+          lastScrollYRef.current = currentScrollY;
+          tickingRef.current = false;
+        });
+        tickingRef.current = true;
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileOpen]);
+
+  useEffect(() => {
+    setMounted(true);
+    // Wait for the intro animation to complete before enabling fast transitions
+    const timer = setTimeout(() => {
+      setHasPlayedIntro(true);
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const target = document.getElementById("home");
+    if (!target) {
+      setHasRevealed(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setHasRevealed(true);
+          }
+        });
+      },
+      { threshold: 0.25 },
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, []);
+
+  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    if (href.startsWith("#")) {
+      e.preventDefault();
+      const targetId = href.replace("#", "");
+      const targetElement = document.getElementById(targetId);
+
+      if (targetElement) {
+        targetElement.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }
+    }
+    setMobileOpen(false);
+  };
+
+  const navTransition = {
+    duration: hasPlayedIntro ? 0.25 : 1,
+    delay: hasPlayedIntro ? 0 : 2.5,
+    ease: hasPlayedIntro ? ("easeOut" as const) : ("easeInOut" as const),
+  };
+
+  return (
+    <motion.nav
+      initial={{ y: -100, opacity: 0 }}
+      animate={{
+        y: hasRevealed && isVisible ? 0 : -100,
+        opacity: hasRevealed && isVisible ? 1 : 0,
+      }}
+      transition={navTransition}
+      className="fixed top-0 right-0 left-0 z-120 will-change-transform"
+    >
+      {/* Black gradient at the very top */}
+      <div className="pointer-events-none absolute top-0 right-0 left-0 h-8 bg-linear-to-b from-black/30 via-black/15 to-transparent" />
+      <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-10">
+        <div className="flex h-12 items-center justify-between sm:h-14 lg:h-20 xl:h-24">
+          <div className="flex items-center gap-4 lg:gap-8">
+            {/* Hamburger for mobile */}
+            <button
+              className="absolute top-6 left-8 p-2 text-white transition hover:text-[#E3C88B] focus:outline-none lg:hidden"
+              onClick={() => setMobileOpen(true)}
+              aria-label="Open menu"
+            >
+              <Menu className="h-8 w-8" />
+            </button>
+
+            {/* Navigation Links - Hidden on mobile, visible on desktop */}
+            <ul className="hidden items-center gap-6 lg:flex xl:gap-8">
+              {navLinks.map((link) => (
+                <li key={link.href}>
+                  <a
+                    href={link.href}
+                    onClick={(e) => handleNavClick(e, link.href)}
+                    className="group relative touch-manipulation text-xs font-light text-white/80 transition-colors duration-200 hover:text-white xl:text-lg 2xl:text-xl"
+                  >
+                    {link.name}
+                    <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-white/80 transition-all duration-300 group-hover:w-full" />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile menu overlay (portal to body to avoid transform containment) */}
+      {mounted &&
+        createPortal(
+          <AnimatePresence>
+            {mobileOpen && (
+              <>
+                <motion.div
+                  className="fixed inset-0 z-[101] bg-black/70 backdrop-blur-sm"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  onClick={() => setMobileOpen(false)}
+                />
+                <motion.div
+                  className="fixed inset-0 z-[130] flex h-screen w-screen flex-col overflow-hidden bg-black"
+                  initial={{ x: "-100%" }}
+                  animate={{ x: 0 }}
+                  exit={{ x: "-100%" }}
+                  transition={{ type: "spring", stiffness: 260, damping: 28 }}
+                >
+                  <div className="flex h-full w-full flex-col">
+                    <div className="flex items-center justify-between px-8 py-6">
+                      <button
+                        className="rounded-full p-2 text-white transition hover:text-[#E3C88B] focus:outline-none"
+                        onClick={() => setMobileOpen(false)}
+                        aria-label="Close menu"
+                      >
+                        <X className="h-8 w-8" />
+                      </button>
+                    </div>
+
+                    <div className="flex flex-1 flex-col items-center justify-center space-y-8">
+                      {navLinks.map((link) => (
+                        <motion.a
+                          key={link.href}
+                          href={link.href}
+                          onClick={(e) => handleNavClick(e, link.href)}
+                          className="font-(family-name:--font-oswald) text-4xl font-bold tracking-widest text-white uppercase transition-colors hover:text-[#E3C88B]"
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          {link.name}
+                        </motion.a>
+                      ))}
+                    </div>
+                  </div>
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>,
+          document.body,
+        )}
+    </motion.nav>
+  );
+};
+
+export default NavbarMenu;

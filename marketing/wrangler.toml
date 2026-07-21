@@ -1,0 +1,4 @@
+name = "qhacks-2027"
+compatibility_date = "2025-11-17"
+compatibility_flags = ["nodejs_compat", "nodejs_compat_populate_process_env"]
+pages_build_output_dir = "out"

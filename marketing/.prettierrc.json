@@ -1,0 +1,9 @@
+{
+  "quoteProps": "consistent",
+  "endOfLine": "auto",
+  "printWidth": 125,
+  "useTabs": false,
+  "tabWidth": 2,
+  "trailingComma": "all",
+  "plugins": ["prettier-plugin-tailwindcss"]
+}

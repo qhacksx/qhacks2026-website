@@ -1,3 +1,6 @@
+packages:
+  - marketing
+
 ignoredBuiltDependencies:
   - esbuild
   - sharp
